@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>think-israel</title>
+    <title>think-israel | סימולטור הסברה</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --primary-blue: #0074D9;
+            --dark-bg: #001f3f;
+        }
+
         body {
-            background-color: #001f3f;
+            background-color: var(--dark-bg);
             color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Assistant', sans-serif; /* פונט נעים לעין */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -22,130 +29,147 @@
             text-align: center;
             width: 90%;
             max-width: 600px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.07);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             z-index: 5;
+            backdrop-filter: blur(10px);
         }
+
+        h1 { font-weight: 700; margin-bottom: 10px; }
+        p { font-weight: 300; font-size: 1.1rem; opacity: 0.9; }
 
         textarea {
             width: 100%;
-            height: 120px;
-            background: #003366;
-            border: 2px solid #0074D9;
+            height: 140px;
+            background: #002b55;
+            border: 1px solid rgba(255,255,255,0.2);
             color: white;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 12px;
             font-size: 16px;
+            font-family: 'Assistant', sans-serif;
             margin: 20px 0;
             resize: none;
+            outline: none;
+            transition: border 0.3s;
         }
+
+        textarea:focus { border-color: var(--primary-blue); }
 
         button {
-            background-color: #0074D9;
+            background-color: var(--primary-blue);
             color: white;
             border: none;
-            padding: 12px 40px;
-            border-radius: 5px;
+            padding: 14px 50px;
+            border-radius: 30px;
             cursor: pointer;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 700;
+            transition: all 0.3s ease;
         }
 
-        /* הגדרות התמונה של המגן דוד */
-        #magen-david-img {
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,116,217,0.4); }
+        button:disabled { background-color: #444; cursor: not-allowed; transform: none; }
+
+        /* אזור המונה והמגן דוד בפינה השמאלית העליונה */
+        #score-zone {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 100px; /* גודל התחלתי */
-            transform: translate(-50%, -50%) scale(0);
-            opacity: 0;
-            z-index: 100;
-            pointer-events: none;
+            top: 20px;
+            left: 20px; /* שמאלה למעלה */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden; /* מוסתר עד ההצלחה הראשונה */
         }
 
-        /* האנימציה המורכבת */
-        @keyframes success-anim {
+        #magen-david-img {
+            width: 60px;
+            height: 60px;
+        }
+
+        #score-count {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 5px;
+            color: #FFD700; /* צבע זהב למספר */
+        }
+
+        /* אנימציה ראשונית: מהמרכז לכל המסך ואז לפינה */
+        @keyframes hero-entrance {
             0% {
-                top: 50%;
-                left: 50%;
+                top: 50%; left: 50%;
                 transform: translate(-50%, -50%) scale(0) rotate(0deg);
                 opacity: 0;
             }
             30% {
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) scale(5) rotate(360deg); /* גדל לכל המסך */
-                opacity: 1;
-            }
-            60% {
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) scale(5) rotate(720deg);
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%) scale(6) rotate(360deg);
                 opacity: 1;
             }
             100% {
-                top: 40px; /* מיקום סופי בפינה */
-                left: calc(100% - 60px);
-                transform: translate(0, 0) scale(1) rotate(1080deg); /* חוזר לגודל רגיל בפינה */
+                top: 20px; left: 20px;
+                transform: translate(0, 0) scale(1) rotate(720deg);
                 opacity: 1;
             }
         }
 
-        /* סיבוב קבוע בפינה אחרי שהאנימציה נגמרת */
-        @keyframes permanent-spin {
+        /* סיבוב קבוע */
+        @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        .animate-success {
-            display: block !important;
-            animation: success-anim 3s ease-in-out forwards;
+        .animating {
+            position: fixed !important;
+            visibility: visible !important;
+            animation: hero-entrance 2.5s ease-in-out forwards;
         }
 
-        .keep-spinning {
-            animation: permanent-spin 4s linear infinite !important;
-            top: 40px !important;
-            left: calc(100% - 80px) !important;
-            transform: translate(0, 0) scale(1) !important;
+        .spinning {
+            animation: spin 6s linear infinite;
         }
 
-        #feedback { margin-top: 20px; font-size: 18px; }
+        #feedback { margin-top: 25px; font-weight: 400; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <img id="magen-david-img" src="magen-david.png" alt="Magen David">
+    <div id="score-zone">
+        <img id="magen-david-img" src="magen-david.png" alt="Magen David">
+        <div id="score-count">0</div>
+    </div>
 
     <div class="container">
         <h1>סימולטור הסברה</h1>
         <p>שאלה: "אם שואלים אותך על המצב בעזה, מה ואיך היית עונה בצורה מכבדת עם טיעונים חזקים?"</p>
-        <textarea id="userAnswer" placeholder="הקלד את תשובתך כאן..."></textarea>
+        <textarea id="userAnswer" placeholder="כתבו כאן את תשובתכם המנומקת..."></textarea>
         <br>
         <button id="checkBtn" onclick="checkAnswer()">בדיקת תשובה</button>
         <div id="feedback"></div>
     </div>
 
     <script>
+        let score = 0;
+
         async function checkAnswer() {
             const userAnswer = document.getElementById('userAnswer').value;
             const feedbackDiv = document.getElementById('feedback');
-            const img = document.getElementById('magen-david-img');
+            const scoreZone = document.getElementById('score-zone');
+            const magenImg = document.getElementById('magen-david-img');
+            const scoreDisplay = document.getElementById('score-count');
             const btn = document.getElementById('checkBtn');
 
             if (!userAnswer.trim()) {
-                alert("בבקשה כתוב תשובה");
+                alert("נא להזין תשובה");
                 return;
             }
 
             btn.disabled = true;
             feedbackDiv.style.color = "white";
-            feedbackDiv.innerHTML = "ה-AI בודק...";
-            
-            // איפוס האנימציה אם הייתה
-            img.classList.remove("animate-success", "keep-spinning");
-            void img.offsetWidth; 
+            feedbackDiv.innerHTML = "מנתח תשובה באמצעות AI...";
 
             const apiKey = "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";
 
@@ -158,7 +182,7 @@
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "user", content: `בדוק אם התשובה הבאה מכבדת ומשכנעת לגבי עזה: "${userAnswer}". החזר JSON: {"isCorrect": true/false, "feedback": "..."}` }],
+                        messages: [{ role: "user", content: `ענה ב-JSON בלבד. האם התשובה הבאה מכבדת ומשכנעת לגבי עזה? "${userAnswer}". מבנה: {"isCorrect": boolean, "feedback": "string"}` }],
                         response_format: { type: "json_object" }
                     })
                 });
@@ -167,25 +191,29 @@
                 const result = JSON.parse(data.choices[0].message.content);
 
                 if (result.isCorrect) {
+                    score++;
                     feedbackDiv.style.color = "#2ECC40";
-                    feedbackDiv.innerHTML = "✅ " + result.feedback;
+                    feedbackDiv.innerHTML = "✨ " + result.feedback;
+
+                    // ניהול האנימציה
+                    scoreDisplay.innerText = score;
+                    scoreZone.classList.remove("animating");
+                    magenImg.classList.remove("spinning");
+                    void scoreZone.offsetWidth; // Trigger reflow
                     
-                    // שלב 1: האנימציה הגדולה
-                    img.classList.add("animate-success");
-                    
-                    // שלב 2: אחרי 3 שניות (כשנגמרת האנימציה) - תעבור לסיבוב קבוע בפינה
+                    scoreZone.classList.add("animating");
+
+                    // בסיום האנימציה (2.5 שניות), להתחיל להסתובב קבוע
                     setTimeout(() => {
-                        img.classList.remove("animate-success");
-                        img.classList.add("keep-spinning");
-                        img.style.opacity = "1";
-                    }, 3000);
+                        magenImg.classList.add("spinning");
+                    }, 2500);
 
                 } else {
                     feedbackDiv.style.color = "#FF4136";
                     feedbackDiv.innerHTML = "❌ " + result.feedback;
                 }
-            } catch (error) {
-                feedbackDiv.innerText = "שגיאה בחיבור.";
+            } catch (e) {
+                feedbackDiv.innerText = "שגיאה בתקשורת.";
             } finally {
                 btn.disabled = false;
             }
