@@ -15,6 +15,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
 
         .container {
@@ -25,6 +26,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 2;
         }
 
         textarea {
@@ -38,6 +40,7 @@
             font-size: 16px;
             margin: 20px 0;
             resize: none;
+            outline: none;
         }
 
         button {
@@ -49,40 +52,42 @@
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
+            transition: 0.3s;
         }
 
-        button:disabled { background-color: #555; }
+        button:hover { background-color: #005bb5; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
 
-        /* מגן דוד בפינה */
+        /* מגן דוד SVG */
         #corner-star {
             position: fixed;
             top: 20px;
             right: 20px;
-            width: 60px;
-            height: 60px;
-            display: none;
-            transform-origin: 50% 50%;
+            width: 80px;
+            height: 80px;
+            display: none; /* יופיע רק בהצלחה */
+            z-index: 10;
         }
 
         /* אנימציה של סיבוב והגדלה */
         @keyframes spin-grow {
-            0% { transform: rotate(0deg) scale(0); }
-            100% { transform: rotate(360deg) scale(1.5); }
+            0% { transform: rotate(0deg) scale(0); opacity: 0; }
+            100% { transform: rotate(720deg) scale(1.2); opacity: 1; }
         }
 
-        #corner-star.animate {
-            display: block;
-            animation: spin-grow 2s ease-out forwards;
+        .animate-star {
+            display: block !important;
+            animation: spin-grow 1.5s ease-out forwards;
         }
 
-        #feedback { margin-top: 20px; line-height: 1.5; }
+        #feedback { margin-top: 20px; line-height: 1.5; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <!-- מגן דוד אמיתי ב-SVG -->
-    <svg id="corner-star" viewBox="0 0 100 100">
-        <polygon points="50,0 61.8,35 98.5,35 68.2,57 79.4,91 50,70 20.6,91 31.8,57 1.5,35 38.2,35" fill="#FFD700"/>
+    <svg id="corner-star" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 5 L85 75 L15 75 Z" fill="none" stroke="#0074D9" stroke-width="5"/>
+        <path d="M50 95 L15 25 L85 25 Z" fill="none" stroke="#0074D9" stroke-width="5"/>
     </svg>
 
     <div class="container">
@@ -108,22 +113,22 @@
                 return;
             }
 
+            // איפוס מצב
             btn.disabled = true;
-            feedbackDiv.innerHTML = "ה-AI מנתח את התשובה שלך... <br> (זה עשוי לקחת כמה שניות)";
+            star.classList.remove("animate-star");
             feedbackDiv.style.color = "white";
+            feedbackDiv.innerHTML = "ה-AI מנתח את התשובה שלך... ✨";
 
             const apiKey = "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";
 
             const prompt = `
-                תפקיד: בוחן רטוריקה והסברה.
-                המשימה של המשתמש: לענות לשאלה על המצב בעזה.
-                קריטריונים להצלחה:
-                1. שפה מכבדת, עניינית ולא מתלהמת.
-                2. הצגת טיעונים לוגיים או עובדתיים חזקים.
+                תפקיד: בוחן רטוריקה והסברה ישראלית.
+                משימה: בדוק האם התשובה הבאה לשאלה על עזה היא מכבדת, משכנעת ובעלת טיעונים חזקים.
+                
                 תשובת המשתמש: "${userAnswer}"
                 
-                ענה ב-JSON בלבד:
-                {"isCorrect": true/false, "feedback": "הסבר קצר בעברית"}
+                החזר JSON בלבד במבנה הבא:
+                {"isCorrect": true/false, "feedback": "הסבר קצר מאוד בעברית"}
             `;
 
             try {
@@ -136,9 +141,12 @@
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
                         messages: [{ role: "user", content: prompt }],
-                        response_format: { type: "json_object" }
+                        response_format: { type: "json_object" },
+                        temperature: 0.5
                     })
                 });
+
+                if (!response.ok) throw new Error("API limit or error");
 
                 const data = await response.json();
                 const result = JSON.parse(data.choices[0].message.content);
@@ -146,20 +154,16 @@
                 if (result.isCorrect) {
                     feedbackDiv.style.color = "#2ECC40"; // ירוק
                     feedbackDiv.innerHTML = "✅ <b>מעולה!</b> " + result.feedback;
-
-                    // אנימציה של מגן דוד
-                    star.classList.remove("animate"); // איפוס אם היה
-                    void star.offsetWidth; // כוח מחדש את האנימציה
-                    star.classList.add("animate");
-
+                    
+                    // הפעלת האנימציה של המגן דוד
+                    star.classList.add("animate-star");
                 } else {
                     feedbackDiv.style.color = "#FF4136"; // אדום
                     feedbackDiv.innerHTML = "❌ <b>כדאי לשפר:</b> " + result.feedback;
-                    star.style.display = "none";
                 }
             } catch (error) {
                 console.error(error);
-                feedbackDiv.innerText = "שגיאה בחיבור לשרת. בדוק את חיבור האינטרנט או את מפתח ה-API.";
+                feedbackDiv.innerText = "שגיאה בחיבור ל-AI. נסה שוב בעוד רגע.";
             } finally {
                 btn.disabled = false;
             }
