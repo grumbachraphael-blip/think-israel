@@ -45,7 +45,6 @@
             margin: 20px 0;
             resize: none;
             outline: none;
-            box-sizing: border-box;
         }
 
         button {
@@ -59,7 +58,7 @@
             font-weight: 700;
         }
 
-        /* אזור הניקוד */
+        /* אזור הניקוד - ימין למעלה */
         #score-zone {
             position: fixed;
             top: 25px;
@@ -69,13 +68,15 @@
             align-items: center;
             z-index: 1000;
             visibility: hidden;
+            /* הבטחת סיבוב סביב המרכז */
+            transform-origin: center center;
         }
 
-        /* המגן דוד כ-SVG כחול */
+        /* מגן דוד סימטרי לחלוטין */
         .magen-david-svg {
             width: 70px;
             height: 70px;
-            fill: #0074D9; /* כחול הסברה */
+            filter: drop-shadow(0 0 5px rgba(0, 116, 217, 0.3));
         }
 
         #score-count {
@@ -87,21 +88,21 @@
             transition: opacity 0.5s;
         }
 
-        /* האנימציה: סיבוב ענק מהמרכז לפינה */
+        /* אנימציית הגיבור - סיבוב סביב הציר של עצמו תוך כדי תנועה */
         @keyframes hero-move {
             0% {
-                top: 50%; left: 50%;
-                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                top: 50%; right: 50%;
+                transform: translate(50%, -50%) scale(0) rotate(0deg);
                 opacity: 0;
             }
             40% {
-                top: 50%; left: 50%;
-                transform: translate(-50%, -50%) scale(5) rotate(720deg); /* שני סיבובים במרכז */
+                top: 50%; right: 50%;
+                transform: translate(50%, -50%) scale(5) rotate(720deg);
                 opacity: 1;
             }
             100% {
-                top: 25px; left: calc(100% - 95px);
-                transform: translate(0, 0) scale(1) rotate(1440deg); /* עוד סיבובים בדרך לפינה */
+                top: 25px; right: 25px;
+                transform: translate(0, 0) scale(1) rotate(1440deg);
                 opacity: 1;
             }
         }
@@ -114,22 +115,23 @@
         .animating {
             position: fixed !important;
             visibility: visible !important;
-            animation: hero-move 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation: hero-move 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
-        .spinning {
-            animation: infinite-spin 10s linear infinite !important;
+        /* הסיבוב האינסופי יופעל על ה-SVG עצמו כדי לא להפריע למיקום המכולה */
+        .spinning-svg {
+            animation: infinite-spin 8s linear infinite !important;
         }
 
-        #feedback { margin-top: 20px; font-size: 1.1rem; }
+        #feedback { margin-top: 20px; font-size: 1.1rem; min-height: 1.5em; }
     </style>
 </head>
 <body>
 
     <div id="score-zone">
         <svg class="magen-david-svg" id="magen-svg" viewBox="0 0 100 100">
-            <path d="M50 5 L85 75 L15 75 Z" fill="none" stroke="#0074D9" stroke-width="6"/>
-            <path d="M50 95 L15 25 L85 25 Z" fill="none" stroke="#0074D9" stroke-width="6"/>
+            <path d="M50 10 L90 80 L10 80 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M50 90 L10 20 L90 20 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
         </svg>
         <div id="score-count">0</div>
     </div>
@@ -145,7 +147,7 @@
 
     <script>
         let score = 0;
-        let lastSuccessfulAnswer = ""; // מניעת ניקוד כפול על אותה תשובה
+        let lastAnswer = "";
 
         async function checkAnswer() {
             const userAnswer = document.getElementById('userAnswer').value.trim();
@@ -158,12 +160,11 @@
             if (!userAnswer) return;
 
             btn.disabled = true;
-            feedbackDiv.style.color = "white";
             feedbackDiv.innerHTML = "ה-AI בודק...";
-
-            // איפוס אנימציה
+            
+            // איפוס אנימציות
             scoreZone.classList.remove("animating");
-            magenSvg.classList.remove("spinning");
+            magenSvg.classList.remove("spinning-svg");
             scoreNum.style.opacity = "0";
             void scoreZone.offsetWidth; 
 
@@ -178,7 +179,7 @@
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "user", content: `ענה ב-JSON: {"isCorrect": boolean, "feedback": "string"}. האם התשובה מכבדת: "${userAnswer}"` }],
+                        messages: [{ role: "user", content: `ענה ב-JSON בלבד: {"isCorrect": boolean, "feedback": "string"}. האם התשובה מכבדת: "${userAnswer}"` }],
                         response_format: { type: "json_object" }
                     })
                 });
@@ -190,16 +191,15 @@
                     feedbackDiv.style.color = "#2ECC40";
                     feedbackDiv.innerHTML = "✅ " + result.feedback;
 
-                    // העלאת ניקוד רק אם התשובה שונה מהקודמת
-                    if (userAnswer !== lastSuccessfulAnswer) {
+                    if (userAnswer !== lastAnswer) {
                         score++;
-                        lastSuccessfulAnswer = userAnswer;
+                        lastAnswer = userAnswer;
                     }
 
                     scoreZone.classList.add("animating");
 
                     setTimeout(() => {
-                        magenSvg.classList.add("spinning");
+                        magenSvg.classList.add("spinning-svg");
                         scoreNum.innerText = score;
                         scoreNum.style.opacity = "1";
                     }, 2500);
