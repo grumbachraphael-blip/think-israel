@@ -6,7 +6,7 @@
     <title>think-israel</title>
     <style>
         body {
-            background-color: #001f3f; /* כחול כהה */
+            background-color: #001f3f;
             color: white;
             font-family: 'Segoe UI', Arial, sans-serif;
             display: flex;
@@ -26,7 +26,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 2;
+            z-index: 5;
         }
 
         textarea {
@@ -40,7 +40,6 @@
             font-size: 16px;
             margin: 20px 0;
             resize: none;
-            outline: none;
         }
 
         button {
@@ -52,52 +51,79 @@
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
-            transition: 0.3s;
         }
 
-        button:hover { background-color: #005bb5; }
-        button:disabled { background-color: #555; cursor: not-allowed; }
-
-        /* מגן דוד SVG */
-        #corner-star {
+        /* הגדרות התמונה של המגן דוד */
+        #magen-david-img {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 80px;
-            height: 80px;
-            display: none; /* יופיע רק בהצלחה */
-            z-index: 10;
+            top: 50%;
+            left: 50%;
+            width: 100px; /* גודל התחלתי */
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
         }
 
-        /* אנימציה של סיבוב והגדלה */
-        @keyframes spin-grow {
-            0% { transform: rotate(0deg) scale(0); opacity: 0; }
-            100% { transform: rotate(720deg) scale(1.2); opacity: 1; }
+        /* האנימציה המורכבת */
+        @keyframes success-anim {
+            0% {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            30% {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(5) rotate(360deg); /* גדל לכל המסך */
+                opacity: 1;
+            }
+            60% {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(5) rotate(720deg);
+                opacity: 1;
+            }
+            100% {
+                top: 40px; /* מיקום סופי בפינה */
+                left: calc(100% - 60px);
+                transform: translate(0, 0) scale(1) rotate(1080deg); /* חוזר לגודל רגיל בפינה */
+                opacity: 1;
+            }
         }
 
-        .animate-star {
+        /* סיבוב קבוע בפינה אחרי שהאנימציה נגמרת */
+        @keyframes permanent-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-success {
             display: block !important;
-            animation: spin-grow 1.5s ease-out forwards;
+            animation: success-anim 3s ease-in-out forwards;
         }
 
-        #feedback { margin-top: 20px; line-height: 1.5; font-size: 18px; }
+        .keep-spinning {
+            animation: permanent-spin 4s linear infinite !important;
+            top: 40px !important;
+            left: calc(100% - 80px) !important;
+            transform: translate(0, 0) scale(1) !important;
+        }
+
+        #feedback { margin-top: 20px; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <svg id="corner-star" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 5 L85 75 L15 75 Z" fill="none" stroke="#0074D9" stroke-width="5"/>
-        <path d="M50 95 L15 25 L85 25 Z" fill="none" stroke="#0074D9" stroke-width="5"/>
-    </svg>
+    <img id="magen-david-img" src="magen-david.png" alt="Magen David">
 
     <div class="container">
         <h1>סימולטור הסברה</h1>
         <p>שאלה: "אם שואלים אותך על המצב בעזה, מה ואיך היית עונה בצורה מכבדת עם טיעונים חזקים?"</p>
-        
         <textarea id="userAnswer" placeholder="הקלד את תשובתך כאן..."></textarea>
         <br>
         <button id="checkBtn" onclick="checkAnswer()">בדיקת תשובה</button>
-        
         <div id="feedback"></div>
     </div>
 
@@ -105,31 +131,23 @@
         async function checkAnswer() {
             const userAnswer = document.getElementById('userAnswer').value;
             const feedbackDiv = document.getElementById('feedback');
-            const star = document.getElementById('corner-star');
+            const img = document.getElementById('magen-david-img');
             const btn = document.getElementById('checkBtn');
 
             if (!userAnswer.trim()) {
-                alert("בבקשה כתוב תשובה לפני הבדיקה");
+                alert("בבקשה כתוב תשובה");
                 return;
             }
 
-            // איפוס מצב
             btn.disabled = true;
-            star.classList.remove("animate-star");
             feedbackDiv.style.color = "white";
-            feedbackDiv.innerHTML = "ה-AI מנתח את התשובה שלך... ✨";
+            feedbackDiv.innerHTML = "ה-AI בודק...";
+            
+            // איפוס האנימציה אם הייתה
+            img.classList.remove("animate-success", "keep-spinning");
+            void img.offsetWidth; 
 
             const apiKey = "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";
-
-            const prompt = `
-                תפקיד: בוחן רטוריקה והסברה ישראלית.
-                משימה: בדוק האם התשובה הבאה לשאלה על עזה היא מכבדת, משכנעת ובעלת טיעונים חזקים.
-                
-                תשובת המשתמש: "${userAnswer}"
-                
-                החזר JSON בלבד במבנה הבא:
-                {"isCorrect": true/false, "feedback": "הסבר קצר מאוד בעברית"}
-            `;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -140,30 +158,34 @@
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "user", content: prompt }],
-                        response_format: { type: "json_object" },
-                        temperature: 0.5
+                        messages: [{ role: "user", content: `בדוק אם התשובה הבאה מכבדת ומשכנעת לגבי עזה: "${userAnswer}". החזר JSON: {"isCorrect": true/false, "feedback": "..."}` }],
+                        response_format: { type: "json_object" }
                     })
                 });
-
-                if (!response.ok) throw new Error("API limit or error");
 
                 const data = await response.json();
                 const result = JSON.parse(data.choices[0].message.content);
 
                 if (result.isCorrect) {
-                    feedbackDiv.style.color = "#2ECC40"; // ירוק
-                    feedbackDiv.innerHTML = "✅ <b>מעולה!</b> " + result.feedback;
+                    feedbackDiv.style.color = "#2ECC40";
+                    feedbackDiv.innerHTML = "✅ " + result.feedback;
                     
-                    // הפעלת האנימציה של המגן דוד
-                    star.classList.add("animate-star");
+                    // שלב 1: האנימציה הגדולה
+                    img.classList.add("animate-success");
+                    
+                    // שלב 2: אחרי 3 שניות (כשנגמרת האנימציה) - תעבור לסיבוב קבוע בפינה
+                    setTimeout(() => {
+                        img.classList.remove("animate-success");
+                        img.classList.add("keep-spinning");
+                        img.style.opacity = "1";
+                    }, 3000);
+
                 } else {
-                    feedbackDiv.style.color = "#FF4136"; // אדום
-                    feedbackDiv.innerHTML = "❌ <b>כדאי לשפר:</b> " + result.feedback;
+                    feedbackDiv.style.color = "#FF4136";
+                    feedbackDiv.innerHTML = "❌ " + result.feedback;
                 }
             } catch (error) {
-                console.error(error);
-                feedbackDiv.innerText = "שגיאה בחיבור ל-AI. נסה שוב בעוד רגע.";
+                feedbackDiv.innerText = "שגיאה בחיבור.";
             } finally {
                 btn.disabled = false;
             }
