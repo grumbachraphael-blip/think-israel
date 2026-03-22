@@ -69,13 +69,11 @@
             visibility: hidden;
         }
 
-        /* מגן דוד "הדוק" וסימטרי */
+        /* מגן דוד קלאסי וסימטרי */
         .magen-david-svg {
             width: 70px;
             height: 70px;
             filter: drop-shadow(0 0 5px rgba(0, 116, 217, 0.3));
-            transform-box: fill-box;
-            transform-origin: center;
         }
 
         #score-count {
@@ -95,7 +93,7 @@
             }
             40% {
                 top: 50%; right: 50%;
-                transform: translate(50%, -50%) scale(5) rotate(720deg);
+                transform: translate(50%, -50%) scale(4.5) rotate(720deg);
                 opacity: 1;
             }
             100% {
@@ -118,6 +116,7 @@
 
         .spinning-svg {
             animation: infinite-spin 10s linear infinite !important;
+            transform-origin: center center;
         }
 
         #feedback { margin-top: 20px; font-size: 1.1rem; min-height: 1.5em; }
@@ -127,8 +126,8 @@
 
     <div id="score-zone">
         <svg class="magen-david-svg" id="magen-svg" viewBox="0 0 100 100">
-            <path d="M50 18 L88 80 L12 80 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
-            <path d="M50 82 L12 20 L88 20 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M50 5 L90 72 L10 72 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M50 95 L10 28 L90 28 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
         </svg>
         <div id="score-count">0</div>
     </div>
