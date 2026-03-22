@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>think-israel | סימולטור הסברה</title>
+    <title>think-israel</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --primary-blue: #0074D9;
-            --dark-bg: #001f3f;
-        }
-
         body {
-            background-color: var(--dark-bg);
+            background-color: #000b18; /* רקע כמעט שחור כדי שהכחול יבלוט */
             color: white;
-            font-family: 'Assistant', sans-serif; /* פונט נעים לעין */
+            font-family: 'Assistant', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -28,77 +23,77 @@
         .container {
             text-align: center;
             width: 90%;
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.07);
+            max-width: 500px;
+            background: #001f3f; 
             padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 1px solid rgba(0, 116, 217, 0.2);
             z-index: 5;
-            backdrop-filter: blur(10px);
         }
 
-        h1 { font-weight: 700; margin-bottom: 10px; }
-        p { font-weight: 300; font-size: 1.1rem; opacity: 0.9; }
-
+        h1 { font-weight: 700; color: #0074D9; margin-top: 0; }
+        
         textarea {
             width: 100%;
-            height: 140px;
-            background: #002b55;
-            border: 1px solid rgba(255,255,255,0.2);
+            height: 120px;
+            background: #001226;
+            border: 1px solid #0074D9;
             color: white;
             padding: 15px;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 17px;
             font-family: 'Assistant', sans-serif;
             margin: 20px 0;
             resize: none;
             outline: none;
-            transition: border 0.3s;
+            box-sizing: border-box;
         }
 
-        textarea:focus { border-color: var(--primary-blue); }
-
         button {
-            background-color: var(--primary-blue);
+            background-color: #0074D9;
             color: white;
             border: none;
-            padding: 14px 50px;
+            padding: 14px 60px;
             border-radius: 30px;
             cursor: pointer;
             font-size: 18px;
             font-weight: 700;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
 
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,116,217,0.4); }
-        button:disabled { background-color: #444; cursor: not-allowed; transform: none; }
+        button:hover { background-color: #7FDBFF; color: #001f3f; }
+        button:disabled { background-color: #333; opacity: 0.5; }
 
-        /* אזור המונה והמגן דוד בפינה השמאלית העליונה */
+        /* אזור הניקוד - ימין למעלה */
         #score-zone {
             position: fixed;
-            top: 20px;
-            left: 20px; /* שמאלה למעלה */
+            top: 25px;
+            right: 25px;
             display: flex;
             flex-direction: column;
             align-items: center;
             z-index: 1000;
-            visibility: hidden; /* מוסתר עד ההצלחה הראשונה */
+            visibility: hidden;
         }
 
         #magen-david-img {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
+            /* ללא פילטרים לבנים - מציג את ה-PNG המקורי שלך */
         }
 
         #score-count {
-            font-size: 20px;
+            font-size: 28px;
             font-weight: 700;
+            color: #FFD700; /* זהב */
             margin-top: 5px;
-            color: #FFD700; /* צבע זהב למספר */
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
 
-        /* אנימציה ראשונית: מהמרכז לכל המסך ואז לפינה */
-        @keyframes hero-entrance {
+        /* אנימציה מהמרכז לפינה */
+        @keyframes hero-to-corner {
             0% {
                 top: 50%; left: 50%;
                 transform: translate(-50%, -50%) scale(0) rotate(0deg);
@@ -106,18 +101,17 @@
             }
             30% {
                 top: 50%; left: 50%;
-                transform: translate(-50%, -50%) scale(6) rotate(360deg);
+                transform: translate(-50%, -50%) scale(5) rotate(360deg);
                 opacity: 1;
             }
             100% {
-                top: 20px; left: 20px;
+                top: 25px; left: calc(100% - 95px);
                 transform: translate(0, 0) scale(1) rotate(720deg);
                 opacity: 1;
             }
         }
 
-        /* סיבוב קבוע */
-        @keyframes spin {
+        @keyframes simple-spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
@@ -125,14 +119,14 @@
         .animating {
             position: fixed !important;
             visibility: visible !important;
-            animation: hero-entrance 2.5s ease-in-out forwards;
+            animation: hero-to-corner 2.5s ease-in-out forwards;
         }
 
         .spinning {
-            animation: spin 6s linear infinite;
+            animation: simple-spin 10s linear infinite !important;
         }
 
-        #feedback { margin-top: 25px; font-weight: 400; font-size: 1.1rem; }
+        #feedback { margin-top: 20px; font-size: 1.1rem; min-height: 1.2em; }
     </style>
 </head>
 <body>
@@ -143,11 +137,11 @@
     </div>
 
     <div class="container">
-        <h1>סימולטור הסברה</h1>
-        <p>שאלה: "אם שואלים אותך על המצב בעזה, מה ואיך היית עונה בצורה מכבדת עם טיעונים חזקים?"</p>
-        <textarea id="userAnswer" placeholder="כתבו כאן את תשובתכם המנומקת..."></textarea>
+        <h1>think-israel</h1>
+        <p>שאלה: "אם שואלים אותך למה אתם עושים גנוסייד בעזה, מה ואיך היית עונה?"</p>
+        <textarea id="userAnswer" placeholder="כתבו כאן תשובה מכבדת עם טיעונים חזקים..."></textarea>
         <br>
-        <button id="checkBtn" onclick="checkAnswer()">בדיקת תשובה</button>
+        <button id="checkBtn" onclick="checkAnswer()">שלח לבדיקה</button>
         <div id="feedback"></div>
     </div>
 
@@ -159,17 +153,20 @@
             const feedbackDiv = document.getElementById('feedback');
             const scoreZone = document.getElementById('score-zone');
             const magenImg = document.getElementById('magen-david-img');
-            const scoreDisplay = document.getElementById('score-count');
+            const scoreNum = document.getElementById('score-count');
             const btn = document.getElementById('checkBtn');
 
-            if (!userAnswer.trim()) {
-                alert("נא להזין תשובה");
-                return;
-            }
+            if (!userAnswer.trim()) return;
 
             btn.disabled = true;
             feedbackDiv.style.color = "white";
-            feedbackDiv.innerHTML = "מנתח תשובה באמצעות AI...";
+            feedbackDiv.innerHTML = "ה-AI בודק את תשובתך...";
+
+            // איפוס מצב
+            scoreZone.classList.remove("animating");
+            magenImg.classList.remove("spinning");
+            scoreNum.style.opacity = "0";
+            void scoreZone.offsetWidth; // Force CSS refresh
 
             const apiKey = "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";
 
@@ -182,7 +179,7 @@
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "user", content: `ענה ב-JSON בלבד. האם התשובה הבאה מכבדת ומשכנעת לגבי עזה? "${userAnswer}". מבנה: {"isCorrect": boolean, "feedback": "string"}` }],
+                        messages: [{ role: "user", content: `ענה ב-JSON בלבד. האם התשובה הבאה מכבדת ומשכנעת? "${userAnswer}". מבנה: {"isCorrect": boolean, "feedback": "string"}` }],
                         response_format: { type: "json_object" }
                     })
                 });
@@ -193,19 +190,16 @@
                 if (result.isCorrect) {
                     score++;
                     feedbackDiv.style.color = "#2ECC40";
-                    feedbackDiv.innerHTML = "✨ " + result.feedback;
+                    feedbackDiv.innerHTML = "✅ " + result.feedback;
 
-                    // ניהול האנימציה
-                    scoreDisplay.innerText = score;
-                    scoreZone.classList.remove("animating");
-                    magenImg.classList.remove("spinning");
-                    void scoreZone.offsetWidth; // Trigger reflow
-                    
+                    // התחלת האנימציה של המגן דוד
                     scoreZone.classList.add("animating");
 
-                    // בסיום האנימציה (2.5 שניות), להתחיל להסתובב קבוע
+                    // מה שקורה כשהוא מגיע לפינה (אחרי 2.5 שניות)
                     setTimeout(() => {
-                        magenImg.classList.add("spinning");
+                        magenImg.classList.add("spinning"); // ממשיך להסתובב
+                        scoreNum.innerText = score;         // מעדכן מספר
+                        scoreNum.style.opacity = "1";       // מראה את המספר
                     }, 2500);
 
                 } else {
@@ -213,7 +207,7 @@
                     feedbackDiv.innerHTML = "❌ " + result.feedback;
                 }
             } catch (e) {
-                feedbackDiv.innerText = "שגיאה בתקשורת.";
+                feedbackDiv.innerText = "שגיאה בחיבור ל-Groq.";
             } finally {
                 btn.disabled = false;
             }
