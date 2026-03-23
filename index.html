@@ -56,7 +56,11 @@
             cursor: pointer;
             font-size: 18px;
             font-weight: 700;
+            transition: 0.3s;
         }
+
+        button:hover { background-color: #0056a3; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         #score-zone {
             position: fixed;
@@ -69,7 +73,7 @@
             visibility: hidden;
         }
 
-        /* מגן דוד קלאסי וסימטרי */
+        /* מגן דוד משופר - חפיפה עמוקה יותר לשפיצים בולטים */
         .magen-david-svg {
             width: 70px;
             height: 70px;
@@ -126,8 +130,8 @@
 
     <div id="score-zone">
         <svg class="magen-david-svg" id="magen-svg" viewBox="0 0 100 100">
-            <path d="M50 5 L90 72 L10 72 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
-            <path d="M50 95 L10 28 L90 28 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M50 5 L92 75 L8 75 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M50 95 L8 25 L92 25 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
         </svg>
         <div id="score-count">0</div>
     </div>
@@ -156,6 +160,7 @@
             if (!userAnswer) return;
 
             btn.disabled = true;
+            feedbackDiv.style.color = "white";
             feedbackDiv.innerHTML = "מנתח תשובה...";
             
             scoreZone.classList.remove("animating");
@@ -174,7 +179,10 @@
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "user", content: `ענה ב-JSON בלבד: {"isCorrect": boolean, "feedback": "string"}. האם התשובה מכבדת: "${userAnswer}"` }],
+                        messages: [
+                            { role: "system", content: "You are an Israeli diplomacy expert. Evaluate the user's answer. Respond ONLY with a valid JSON object: {\"isCorrect\": boolean, \"feedback\": \"string\"}. Do not include any other text." },
+                            { role: "user", content: `האם התשובה הבאה מכבדת ומשכנעת להסברה ישראלית? ענה בעברית בתוך ה-JSON: "${userAnswer}"` }
+                        ],
                         response_format: { type: "json_object" }
                     })
                 });
@@ -204,7 +212,8 @@
                     feedbackDiv.innerHTML = "❌ " + result.feedback;
                 }
             } catch (e) {
-                feedbackDiv.innerText = "שגיאה בחיבור.";
+                feedbackDiv.innerText = "שגיאה בניתוח התשובה. נסה שנית.";
+                console.error(e);
             } finally {
                 btn.disabled = false;
             }
