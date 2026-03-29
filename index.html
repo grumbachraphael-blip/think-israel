@@ -6,7 +6,7 @@
     <title>Think-Israel | 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --main-blue: #0074D9; --dark-bg: #001f3f; --card-bg: #002b55; }
+        :root { --main-blue: #0074D9; --dark-bg: #001f3f; --card-bg: #002b55; --success: #2ECC40; }
         body {
             background-color: var(--dark-bg); color: white; font-family: 'Assistant', sans-serif;
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px;
@@ -25,6 +25,8 @@
             width: 100%; padding: 12px; border-radius: 10px; background: #001226; 
             color: white; border: 1px solid var(--main-blue); margin-bottom: 20px; font-family: 'Assistant';
         }
+        option:disabled { color: var(--success); background: #002b55; }
+
         textarea {
             width: 100%; height: 140px; background: #001226; border: 1px solid var(--main-blue);
             color: white; padding: 15px; border-radius: 12px; font-size: 16px;
@@ -33,10 +35,8 @@
         button {
             background-color: var(--main-blue); color: white; border: none; padding: 14px 60px;
             border-radius: 30px; cursor: pointer; font-size: 18px; font-weight: 700; margin-top: 15px;
-            transition: transform 0.2s;
         }
-        button:active { transform: scale(0.95); }
-        button:disabled { opacity: 0.5; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* אנימציית המגן דוד */
         #score-zone { 
@@ -50,14 +50,20 @@
         .magen-david-svg { width: 80px; height: 80px; filter: drop-shadow(0 0 10px var(--main-blue)); }
         #score-count { font-size: 28px; font-weight: 700; color: #FFD700; margin-top: 5px; opacity: 0; }
 
-        /* האנימציה שביקשת: יוצא מהאמצע, מסתובב וזז לפינה */
         @keyframes hero-move {
             0% { top: 50%; right: 50%; transform: translate(50%, -50%) scale(0) rotate(0deg); opacity: 0; visibility: visible; }
             40% { top: 50%; right: 50%; transform: translate(50%, -50%) scale(4.5) rotate(720deg); opacity: 1; }
             100% { top: 25px; right: 25px; transform: translate(0, 0) scale(1) rotate(1440deg); opacity: 1; visibility: visible; }
         }
+
+        /* סיבוב אינסופי בפינה */
+        @keyframes infinite-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         
         .animating { animation: hero-move 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .spinning-svg { animation: infinite-spin 10s linear infinite !important; }
         .show-score { opacity: 1 !important; transition: opacity 0.5s; }
         
         #feedback { margin-top: 20px; font-weight: bold; min-height: 1.5em; font-size: 1.1rem; }
@@ -66,7 +72,7 @@
 <body>
 
 <div id="score-zone">
-    <svg class="magen-david-svg" viewBox="0 0 100 100">
+    <svg class="magen-david-svg" id="magen-svg" viewBox="0 0 100 100">
         <path d="M50 5 L92 75 L8 75 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
         <path d="M50 95 L8 25 L92 25 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
     </svg>
@@ -75,7 +81,7 @@
 
 <div class="container">
     <h1>Think-Israel</h1>
-    <p>בחרו קטגוריה ושאלה:</p>
+    <p>ענו נכון על השאלות כדי "לכבוש" אותן:</p>
 
     <div class="tabs">
         <div class="tab active" onclick="switchCategory('personality', this)">אישיות</div>
@@ -124,13 +130,29 @@
         ]
     };
 
+    // מערך לשמירת שאלות שכבר נענו נכון
+    let completedQuestions = [];
     let currentCategory = 'personality';
     let score = 0;
 
-    // מוחק את הטקסט כשמחליפים שאלה
     function clearTextArea() {
-        document.getElementById('userAnswer').value = "";
+        const select = document.getElementById('questionSelect');
+        const answerBox = document.getElementById('userAnswer');
+        const btn = document.getElementById('checkBtn');
+        
+        answerBox.value = "";
         document.getElementById('feedback').innerHTML = "";
+
+        // אם השאלה כבר הושלמה, ננעל את הכפתור והתיבה
+        if (completedQuestions.includes(select.value)) {
+            answerBox.disabled = true;
+            answerBox.placeholder = "כבר ענית נכון על שאלה זו! ✅";
+            btn.disabled = true;
+        } else {
+            answerBox.disabled = false;
+            answerBox.placeholder = "כתבו כאן את תשובת ההסברה שלכם...";
+            btn.disabled = false;
+        }
     }
 
     function switchCategory(cat, el) {
@@ -143,15 +165,20 @@
 
     function renderQuestions() {
         const select = document.getElementById('questionSelect');
-        select.innerHTML = questions[currentCategory].map(q => `<option value="${q}">${q}</option>`).join('');
+        select.innerHTML = questions[currentCategory].map(q => {
+            const isDone = completedQuestions.includes(q);
+            return `<option value="${q}" ${isDone ? 'disabled' : ''}>${isDone ? '✅ ' : ''}${q}</option>`;
+        }).join('');
     }
 
     async function checkAnswer() {
         const answer = document.getElementById('userAnswer').value.trim();
-        const question = document.getElementById('questionSelect').value;
+        const select = document.getElementById('questionSelect');
+        const question = select.value;
         const feedbackDiv = document.getElementById('feedback');
         const btn = document.getElementById('checkBtn');
         const scoreZone = document.getElementById('score-zone');
+        const magenSvg = document.getElementById('magen-svg');
         const scoreNum = document.getElementById('score-count');
 
         if (!answer) return;
@@ -160,10 +187,11 @@
         feedbackDiv.style.color = "white";
         feedbackDiv.innerHTML = "מנתח תשובה בשרת...";
 
-        // איפוס אנימציה קודמת
+        // איפוס אנימציה
         scoreZone.classList.remove("animating");
+        magenSvg.classList.remove("spinning-svg");
         scoreNum.classList.remove("show-score");
-        void scoreZone.offsetWidth; // טריק לריענון האנימציה ב-CSS
+        void scoreZone.offsetWidth; 
 
         try {
             const response = await fetch("/api/check-answer", {
@@ -177,21 +205,29 @@
                 feedbackDiv.style.color = "#2ECC40";
                 feedbackDiv.innerHTML = "✅ " + result.feedback;
                 
+                // הוספה לרשימת המושלמים
+                completedQuestions.push(question);
+                renderQuestions(); // עדכון ה-V בתפריט
+                
                 score++;
                 scoreNum.innerText = score;
                 
-                // הפעלת האנימציה שביקשת
+                // אנימציה
                 scoreZone.classList.add("animating");
                 setTimeout(() => {
                     scoreNum.classList.add("show-score");
-                }, 2200);
+                    magenSvg.classList.add("spinning-svg"); // סיבוב אינסופי בפינה
+                }, 2500);
+
+                // נעילת השאלה
+                document.getElementById('userAnswer').disabled = true;
             } else {
                 feedbackDiv.style.color = "#FF4136";
                 feedbackDiv.innerHTML = "❌ " + result.feedback;
+                btn.disabled = false;
             }
         } catch (e) {
             feedbackDiv.innerHTML = "שגיאה בחיבור לשרת.";
-        } finally {
             btn.disabled = false;
         }
     }
