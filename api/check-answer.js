@@ -1,10 +1,8 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-    const { answer } = req.body;
-    const apiKey = process.env.GROQ_API_KEY; // המפתח יימשך מהגדרות Vercel
+    const { question, answer } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
 
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -16,8 +14,18 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
                 messages: [
-                    { role: "system", content: "You are an Israeli diplomacy expert. Evaluate the user's answer. Respond ONLY with a valid JSON object: {\"isCorrect\": boolean, \"feedback\": \"string\"}. Feedback must be in Hebrew." },
-                    { role: "user", content: `האם התשובה הזו מכבדת ומשכנעת להסברה? ענה בפורמט JSON בלבד. התשובה: "${answer}"` }
+                    { 
+                        role: "system", 
+                        content: `You are an Israeli diplomacy and history expert. 
+                        Evaluate the user's answer to a specific tough question. 
+                        The answer should be factual, empathetic but firm, and avoid inflammatory language.
+                        Respond ONLY with a valid JSON object: {"isCorrect": boolean, "feedback": "string"}. 
+                        Feedback must be in Hebrew and concise.` 
+                    },
+                    { 
+                        role: "user", 
+                        content: `השאלה: "${question}"\nהתשובה של המשתמש: "${answer}"\nהאם זו תשובת הסברה טובה?` 
+                    }
                 ],
                 response_format: { type: "json_object" }
             })
@@ -27,6 +35,6 @@ export default async function handler(req, res) {
         const aiResponse = JSON.parse(data.choices[0].message.content);
         res.status(200).json(aiResponse);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to connect to Groq' });
+        res.status(500).json({ error: 'Failed to analyze answer' });
     }
 }
