@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Think-Israel | 2026 Edition</title>
+    <title>Think-Israel | 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root { --main-blue: #0074D9; --dark-bg: #001f3f; --card-bg: #002b55; }
         body {
             background-color: var(--dark-bg); color: white; font-family: 'Assistant', sans-serif;
             display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px;
+            overflow-x: hidden;
         }
         .container {
             text-align: center; width: 100%; max-width: 600px; background: var(--card-bg);
             padding: 30px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-            border: 1px solid rgba(0, 116, 217, 0.4); margin-top: 50px;
+            border: 1px solid rgba(0, 116, 217, 0.4); margin-top: 50px; z-index: 5;
         }
         .tabs { display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #444; }
         .tab { cursor: pointer; padding: 10px; opacity: 0.6; transition: 0.3s; font-weight: bold; }
@@ -25,53 +26,68 @@
             color: white; border: 1px solid var(--main-blue); margin-bottom: 20px; font-family: 'Assistant';
         }
         textarea {
-            width: 100%; height: 120px; background: #001226; border: 1px solid var(--main-blue);
+            width: 100%; height: 140px; background: #001226; border: 1px solid var(--main-blue);
             color: white; padding: 15px; border-radius: 12px; font-size: 16px;
             font-family: 'Assistant'; resize: none; outline: none; box-sizing: border-box;
         }
         button {
-            background-color: var(--main-blue); color: white; border: none; padding: 14px 40px;
+            background-color: var(--main-blue); color: white; border: none; padding: 14px 60px;
             border-radius: 30px; cursor: pointer; font-size: 18px; font-weight: 700; margin-top: 15px;
+            transition: transform 0.2s;
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; }
 
-        /* Scoring Animation Components */
-        #score-zone { position: fixed; top: 25px; right: 25px; display: flex; flex-direction: column; align-items: center; visibility: hidden; }
-        .magen-david-svg { width: 60px; height: 60px; }
-        #score-count { font-size: 24px; font-weight: 700; color: #FFD700; }
-        .animating { visibility: visible !important; animation: hero-move 2s forwards; }
-        @keyframes hero-move {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.5); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
+        /* אנימציית המגן דוד */
+        #score-zone { 
+            position: fixed; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            visibility: hidden; 
+            z-index: 1000;
         }
-        #feedback { margin-top: 20px; font-weight: bold; min-height: 1.5em; }
+        .magen-david-svg { width: 80px; height: 80px; filter: drop-shadow(0 0 10px var(--main-blue)); }
+        #score-count { font-size: 28px; font-weight: 700; color: #FFD700; margin-top: 5px; opacity: 0; }
+
+        /* האנימציה שביקשת: יוצא מהאמצע, מסתובב וזז לפינה */
+        @keyframes hero-move {
+            0% { top: 50%; right: 50%; transform: translate(50%, -50%) scale(0) rotate(0deg); opacity: 0; visibility: visible; }
+            40% { top: 50%; right: 50%; transform: translate(50%, -50%) scale(4.5) rotate(720deg); opacity: 1; }
+            100% { top: 25px; right: 25px; transform: translate(0, 0) scale(1) rotate(1440deg); opacity: 1; visibility: visible; }
+        }
+        
+        .animating { animation: hero-move 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .show-score { opacity: 1 !important; transition: opacity 0.5s; }
+        
+        #feedback { margin-top: 20px; font-weight: bold; min-height: 1.5em; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
 <div id="score-zone">
     <svg class="magen-david-svg" viewBox="0 0 100 100">
-        <path d="M50 5 L92 75 L8 75 Z" fill="none" stroke="#0074D9" stroke-width="7"/>
-        <path d="M50 95 L8 25 L92 25 Z" fill="none" stroke="#0074D9" stroke-width="7"/>
+        <path d="M50 5 L92 75 L8 75 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
+        <path d="M50 95 L8 25 L92 25 Z" fill="none" stroke="#0074D9" stroke-width="7" stroke-linejoin="round"/>
     </svg>
     <div id="score-count">0</div>
 </div>
 
 <div class="container">
     <h1>Think-Israel</h1>
-    <p>בחרו קטגוריה ושאלה כדי להתאמן על הסברה:</p>
+    <p>בחרו קטגוריה ושאלה:</p>
 
-    <div class="tabs" id="tabBar">
-        <div class="tab active" onclick="switchCategory('personality')">אישיות</div>
-        <div class="tab" onclick="switchCategory('history')">היסטוריה</div>
-        <div class="tab" onclick="switchCategory('politics')">פוליטיקה</div>
-        <div class="tab" onclick="switchCategory('criticism')">ביקורת</div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchCategory('personality', this)">אישיות</div>
+        <div class="tab" onclick="switchCategory('history', this)">היסטוריה</div>
+        <div class="tab" onclick="switchCategory('politics', this)">פוליטיקה</div>
+        <div class="tab" onclick="switchCategory('criticism', this)">ביקורת</div>
     </div>
 
-    <select id="questionSelect"></select>
+    <select id="questionSelect" onchange="clearTextArea()"></select>
     
-    <textarea id="userAnswer" placeholder="כתבו כאן תשובה עניינית ומכבדת..."></textarea>
+    <textarea id="userAnswer" placeholder="כתבו כאן את תשובת ההסברה שלכם..."></textarea>
+    <br>
     <button id="checkBtn" onclick="checkAnswer()">שלח לבדיקה</button>
     <div id="feedback"></div>
 </div>
@@ -81,41 +97,48 @@
         personality: [
             "למה המדינה מחייבת את כולם להתגייס, ואיך זה משפיע על מי שלא רוצה?",
             "איך אתם מסבירים את זה שאתם מתגייסים לצבא שבעולם רואים אותו כצבא טרור?",
-            "מה זה בכלל אומר להיות 'ציוני' ב-2026? זה רק לאום או משהו מעבר?",
-            "למה יש תמיכה כל כך רחבה במה שקורה בעזה, למרות המראות הקשים?",
+            "מה זה בכלל אומר להיות 'ציוני' ב-2026?",
+            "למה יש תמיכה כל כך רחבה במה שקורה בעזה?",
             "למה יש תחושה שיהודים חושבים שהם 'יותר טובים' מאחרים?"
         ],
         history: [
-            "מאיפה הביטחון שהייתם פה קודם ושהארץ הזאת שייכת לכם?",
-            "למה גירשתם המון ערבים ב-1948, והאם יש דרך לתקן את זה?",
+            "מאיפה הביטחון שהארץ הזאת שייכת לכם?",
+            "למה גירשתם המון ערבים ב-1948?",
             "למה דווקא היהודים קיבלו מדינה על חשבון מי שגר פה?",
-            "למה כבשתם שטח כל כך גדול ב-67' ואתם עדיין מחזיקים בו?",
+            "למה כבשתם שטח כל כך גדול ב-67'?",
             "למה ישראל נכנסה למלחמות בלבנון אם הם לא תקפו קודם?"
         ],
         politics: [
-            "למה באמת אין שלום עם הפלסטינים? מי הצד שתוקע את זה?",
-            "למה ישראל ממשיכה לתקוף בעזה שוב ושוב במקום למצוא פתרון אחר?",
-            "מה האינטרס האמיתי של ארצות הברית לתמוך בישראל בצורה כזו?",
-            "מי באמת אשם בבלגן שיש במזרח התיכון – ישראל או השכנות שלה?",
-            "למה ישראל לא פשוט מניחה את הנשק ומפסיקה להילחם כדי לעצור את שפיכות הדמים?"
+            "למה באמת אין שלום עם הפלסטינים?",
+            "למה ישראל ממשיכה לתקוף בעזה שוב ושוב?",
+            "מה האינטרס האמיתי של ארצות הברית לתמוך בישראל?",
+            "מי באמת אשם בבלגן שיש במזרח התיכון?",
+            "למה ישראל לא פשוט מניחה את הנשק ומפסיקה להילחם?"
         ],
         criticism: [
-            "האם צה\"ל באמת פוגע בילדים בכוונה במהלך הלחימה?",
-            "האם היהודים משתמשים בשואה כדי לקבל חסינות מהעולם וזכות קיום למדינה?",
+            "האם צה\"ל באמת פוגע בילדים בכוונה?",
+            "האם היהודים משתמשים בשואה כדי לקבל חסינות מהעולם?",
             "איך ישראל מגיבה לטענה שהיא מבצעת רצח עם בעזה?",
-            "האם יש אמת בטענות שישראל ביימה את אירועי ה-7 באוקטובר למטרות פוליטיות?",
-            "למה בעולם משווים את ישראל לגרמניה הנאצית, ומה ההבדל האמיתי לדעתכם?"
+            "האם ישראל ביימה את אירועי ה-7 באוקטובר?",
+            "למה בעולם משווים את ישראל לגרמניה הנאצית?"
         ]
     };
 
     let currentCategory = 'personality';
     let score = 0;
 
-    function switchCategory(cat) {
+    // מוחק את הטקסט כשמחליפים שאלה
+    function clearTextArea() {
+        document.getElementById('userAnswer').value = "";
+        document.getElementById('feedback').innerHTML = "";
+    }
+
+    function switchCategory(cat, el) {
         currentCategory = cat;
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
+        el.classList.add('active');
         renderQuestions();
+        clearTextArea();
     }
 
     function renderQuestions() {
@@ -128,11 +151,19 @@
         const question = document.getElementById('questionSelect').value;
         const feedbackDiv = document.getElementById('feedback');
         const btn = document.getElementById('checkBtn');
+        const scoreZone = document.getElementById('score-zone');
+        const scoreNum = document.getElementById('score-count');
 
         if (!answer) return;
+        
         btn.disabled = true;
         feedbackDiv.style.color = "white";
-        feedbackDiv.innerHTML = "מנתח תשובה...";
+        feedbackDiv.innerHTML = "מנתח תשובה בשרת...";
+
+        // איפוס אנימציה קודמת
+        scoreZone.classList.remove("animating");
+        scoreNum.classList.remove("show-score");
+        void scoreZone.offsetWidth; // טריק לריענון האנימציה ב-CSS
 
         try {
             const response = await fetch("/api/check-answer", {
@@ -145,9 +176,15 @@
             if (result.isCorrect) {
                 feedbackDiv.style.color = "#2ECC40";
                 feedbackDiv.innerHTML = "✅ " + result.feedback;
+                
                 score++;
-                document.getElementById('score-count').innerText = score;
-                document.getElementById('score-zone').classList.add('animating');
+                scoreNum.innerText = score;
+                
+                // הפעלת האנימציה שביקשת
+                scoreZone.classList.add("animating");
+                setTimeout(() => {
+                    scoreNum.classList.add("show-score");
+                }, 2200);
             } else {
                 feedbackDiv.style.color = "#FF4136";
                 feedbackDiv.innerHTML = "❌ " + result.feedback;
